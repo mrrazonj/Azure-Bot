@@ -1,6 +1,9 @@
 import discord
 from discord.ext import commands, tasks
+import os
 
+import threading
+import datetime
 import schedule
 
 import sqlite3
@@ -18,15 +21,8 @@ async def on_ready():
         await channel.send(f"{client.user} is now online!")
 
 
-@client.command()
-async def ping(ctx):
-    await ctx.send(f"```css\n"
-                   f"Latency to bot is {round(client.latency, 5)}ms.\n"
-                   f"```")
-
-
-@client.command()
-async def clean(ctx, amount=25):
-    await ctx.channel.purge(limit=amount)
+for modules in os.listdir("./modules"):
+    if modules.endswith(".py"):
+        client.load_extension(f"modules.{modules[:-3]}")
 
 client.run(botconf.token)
