@@ -11,7 +11,7 @@ import time
 #
 # c.execute('''CREATE TABLE attendance
 #             (
-#              Username text,
+#              Username text primary key,
 #              Monday int,
 #              Tuesday int,
 #              Wednesday int,
@@ -19,8 +19,8 @@ import time
 #              Friday int,
 #              Saturday int,
 #              Sunday int,
-#              Total int default 0
-#           ''')
+#              Total int default 0)
+#            ''')
 #
 # connect.close()
 
@@ -43,27 +43,29 @@ class Guild(commands.Cog):
     @commands.command(aliases=["ci"])
     @commands.has_role("To-Attend")
     async def checkin(self, ctx):
-        # t = time.localtime()
-        # connect = sqlite3.connect("dailyattendance.db")
-        # c = connect.cursor()
-        # c.execute(f'''UPDATE attendance
-        #               SET {time.strftime("%A", t)} = 1,
-        #                   Total = Total + 1
-        #               WHERE Username = '{ctx.author.nick}'
-        #            ''')
-        # connect.close()
+        t = time.localtime()
+        connect = sqlite3.connect("modules/data/guild.db")
+        c = connect.cursor()
+        c.execute(f'''UPDATE attendance
+                      SET {time.strftime("%A", t)} = 1,
+                          Total = Total + 1
+                      WHERE Username = '{ctx.author.display_name}'
+                   ''')
+        connect.commit()
+        connect.close()
         to_attend = get(ctx.guild.roles, name="To-Attend")
         await ctx.author.remove_roles(to_attend)
 
     @commands.command(aliases=["vm"])
     @commands.has_role("Guild Master")
     async def verify(self, ctx, *, member: discord.Member):
-        # connect = sqlite3.connect("dailyattendance.db")
-        # c = connect.cursor()
-        # c.execute(f'''INSERT INTO attendance (Username, Total)
-        #               VALUES ('{member.nick}', 7)
-        #            ''')
-        # connect.close()
+        connect = sqlite3.connect("modules/data/guild.db")
+        c = connect.cursor()
+        c.execute(f'''INSERT INTO attendance (Username, Total)
+                      VALUES ('{member.display_name}', 7)
+                   ''')
+        connect.commit()
+        connect.close()
         to_attend = get(ctx.guild.roles, name="To-Attend")
         for_approval = get(ctx.guild.roles, name="For-Approval")
         member_role = get(ctx.guild.roles, name="Member")
