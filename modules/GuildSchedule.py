@@ -21,14 +21,44 @@ class GuildSchedule(commands.Cog):
     @tasks.loop(seconds=1)
     async def reset_daily(self):
         log_channel = self.client.get_channel(BotConf.log_channel_id)
+
+        reset_hour = str(BotConf.reset_hour)
+        if len(reset_hour) == 1:
+            reset_hour = f"0{reset_hour}"
+        reset_minute = str(BotConf.reset_minute)
+        if len(reset_minute) == 1:
+            reset_minute = f"0{reset_minute}"
+
+        flag_reset_minute = ""
+        flag_reset_hour = ""
+        if BotConf.reset_minute == 0:
+            flag_reset_minute = "59"
+            if BotConf.reset_hour == 0:
+                flag_reset_hour = "23"
+            else:
+                flag_reset_hour = str(BotConf.reset_hour - 1)
+                if len(flag_reset_hour) == 1:
+                    flag_reset_hour = f"0{flag_reset_hour}"
+        else:
+            flag_reset_minute = str(BotConf.reset_minute - 1)
+            if len(flag_reset_minute) == 1:
+                flag_reset_minute = f"0{flag_reset_minute}"
+            flag_reset_hour = str(BotConf.reset_hour)
+            if len(flag_reset_hour) == 1:
+                flag_reset_hour = f"0{flag_reset_hour}"
+
+        flag_reset_time = f"{flag_reset_hour}:{flag_reset_minute}"
+        reset_time = f"{reset_hour}:{reset_minute}"
+
         t = time.localtime()
-        reset_schedule = time.strftime("%H:%M", t)
+        current_time = time.strftime("%H:%M", t)
         current_day = time.strftime("%A", t)
 
-        if reset_schedule == "00:00":
+        if current_time == flag_reset_time:
+            print("Flags Reset")
             self.has_reset_daily = False
 
-        if reset_schedule == "00:10" and not self.has_reset_daily:
+        if current_time == reset_time and not self.has_reset_daily:
             guild = self.client.get_guild(BotConf.guild_id)
             to_attend = get(guild.roles, name="To-Attend")
             for role in guild.roles:
@@ -36,7 +66,7 @@ class GuildSchedule(commands.Cog):
                     for member in role.members:
                         await member.add_roles(to_attend)
 
-            if current_day == "Sunday":
+            if current_day == "Monday":
                 connection = sqlite3.connect("modules/data/guild.db")
                 c = connection.cursor()
                 c.execute('''UPDATE attendance
