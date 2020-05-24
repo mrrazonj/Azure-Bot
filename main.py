@@ -2,15 +2,10 @@ import discord
 from discord.ext import commands, tasks
 import os
 
-import threading
-import datetime
-import schedule
+import BotConf
 
-import sqlite3
 
-import botconf
-
-client = commands.Bot(command_prefix=botconf.prefix, description=botconf.description)
+client = commands.Bot(command_prefix=BotConf.prefix, description=BotConf.description)
 
 
 @client.event
@@ -25,4 +20,4 @@ for modules in os.listdir("./modules"):
     if modules.endswith(".py"):
         client.load_extension(f"modules.{modules[:-3]}")
 
-client.run(botconf.token)
+client.run(BotConf.token)
