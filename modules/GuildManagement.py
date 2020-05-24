@@ -51,8 +51,16 @@ class GuildManagement(commands.Cog):
                       WHERE Username = '{ctx.author.display_name}'
                    ''')
         connect.commit()
+        c.execute(f'''SELECT Total FROM attendance WHERE Username = '{ctx.author.display_name}'
+                   ''')
+        total = c.fetchone()
         connect.close()
         to_attend = get(ctx.guild.roles, name="To-Attend")
+        if ctx.author.dm_channel is None:
+            await ctx.author.create_dm()
+        await ctx.author.dm_channel.send(f"Thank you for logging in today {ctx.author.display_name}, the guild "
+                                         f"appreciates you for being active! You have currently logged in "
+                                         f"{total[0]} time(s) this week.")
         await ctx.author.remove_roles(to_attend)
         await ctx.message.delete()
 
