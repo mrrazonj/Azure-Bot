@@ -29,8 +29,6 @@ class GuildSchedule(commands.Cog):
         if len(reset_minute) == 1:
             reset_minute = f"0{reset_minute}"
 
-        flag_reset_minute = ""
-        flag_reset_hour = ""
         if BotConf.reset_minute == 0:
             flag_reset_minute = "59"
             if BotConf.reset_hour == 0:
@@ -66,7 +64,7 @@ class GuildSchedule(commands.Cog):
                     for member in role.members:
                         await member.add_roles(to_attend)
 
-            if current_day == "Monday":
+            if current_day == BotConf.reset_day:
                 connection = sqlite3.connect("modules/data/guild.db")
                 c = connection.cursor()
                 c.execute('''UPDATE attendance
