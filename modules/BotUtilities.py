@@ -22,6 +22,20 @@ class GeneralUtilities(commands.Cog):
 
     @commands.command(aliases=["lsr"])
     async def listrole(self, ctx, *, target_role):
+        if not ctx.message.role_mentions:
+            if target_role.startswith('@'):
+                target_role = target_role[1:]
+            role_list = []
+            for role in ctx.guild.roles:
+                role_list.append(role.name)
+            if target_role not in role_list:
+                await ctx.channel.send(f"{target_role} role not found!")
+                await ctx.message.delete()
+                return
+
+        else:
+            target_role = ctx.message.role_mentions[0].name
+
         member_list = []
         for role in ctx.guild.roles:
             if role.name == target_role:
