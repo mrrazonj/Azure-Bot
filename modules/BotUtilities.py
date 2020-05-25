@@ -4,7 +4,7 @@ from discord.ext import commands
 import sqlite3
 
 
-class Utilities(commands.Cog):
+class GeneralUtilities(commands.Cog):
 
     def __init__(self, client):
         self.client = client
@@ -27,21 +27,14 @@ class Utilities(commands.Cog):
             if role.name == target_role:
                 for members in role.members:
                     member_list.append(members.display_name)
-        await ctx.channel.send(f"```\n"
-                               f"{member_list}\n"
-                               f"```")
 
-    @commands.command(aliases=["rc"])
-    @commands.has_role("Member")
-    async def records(self, ctx, *, member: discord.Member):
-        connection = sqlite3.connect("modules/data/guild.db")
-        c = connection.cursor()
-        c.execute(f'''SELECT Total FROM attendance WHERE Username = '{member.display_name}'
-                   ''')
-        total = c.fetchone()
-        c.close()
-        await ctx.channel.send(f"{member.display_name} has checked-in {total[0]} time(s) this week!")
+        final_list = ("\n".join(str(i) for i in member_list))
+        await ctx.channel.send(f"**Members in {target_role} role:**"
+                               f"```css\n"
+                               f"{final_list}\n"
+                               f"```")
+        await ctx.message.delete()
 
 
 def setup(client):
-    client.add_cog(Utilities(client))
+    client.add_cog(GeneralUtilities(client))
