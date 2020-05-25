@@ -20,7 +20,8 @@ class GuildSchedule(commands.Cog):
 
     @tasks.loop(seconds=1)
     async def reset_daily(self):
-        log_channel = self.client.get_channel(BotConf.log_channel_id)
+        log_channel = self.client.get_channel(BotConf.id_channel_log)
+        notice_channel = self.client.get_channel(BotConf.id_channel_notice)
 
         reset_hour = str(BotConf.reset_hour)
         if len(reset_hour) == 1:
@@ -29,8 +30,6 @@ class GuildSchedule(commands.Cog):
         if len(reset_minute) == 1:
             reset_minute = f"0{reset_minute}"
 
-        flag_reset_minute = ""
-        flag_reset_hour = ""
         if BotConf.reset_minute == 0:
             flag_reset_minute = "59"
             if BotConf.reset_hour == 0:
@@ -59,17 +58,35 @@ class GuildSchedule(commands.Cog):
             self.has_reset_daily = False
 
         if current_time == reset_time and not self.has_reset_daily:
-            guild = self.client.get_guild(BotConf.guild_id)
+            guild = self.client.get_guild(BotConf.id_guild)
             to_attend = get(guild.roles, name="To-Attend")
             for role in guild.roles:
                 if role.name == "Member":
                     for member in role.members:
                         await member.add_roles(to_attend)
 
-            if current_day == "Monday":
+            if current_day == BotConf.reset_day:
                 connection = sqlite3.connect("modules/data/guild.db")
                 c = connection.cursor()
-                c.execute('''UPDATE attendance
+                c.execute('''INSERT OR IGNORE INTO infractions(Username) SELECT Username FROM guild
+                          ''')
+                connection.commit()
+
+                c.execute(f'''SELECT Username FROM guild WHERE Total < {BotConf.num_attendances_required}
+                           ''')
+                members = c.fetchall()
+                list_member = []
+                for member in members:
+                    list_member.append(member[0])
+
+                for member in list_member:
+                    c.execute(f'''UPDATE infractions
+                                  SET Penalties = Penalties + 1
+                                  WHERE Username = '{member}'
+                               ''')
+                    connection.commit()
+
+                c.execute('''UPDATE guild
                              SET Monday = 0,
                                  Tuesday = 0,
                                  Wednesday = 0,
@@ -81,6 +98,12 @@ class GuildSchedule(commands.Cog):
                           ''')
                 connection.commit()
                 connection.close()
+
+                list_inactive = ("\n".join(str(i) for i in list_member))
+                await notice_channel.send(f"**Inactive members penalized:**\n"
+                                          f"```css\n"
+                                          f"{list_inactive}\n"
+                                          f"```")
 
             await log_channel.send("Attendance module reset!")
             self.has_reset_daily = True
