@@ -11,8 +11,8 @@ client = commands.Bot(command_prefix=BotConf.bot_prefix, description=BotConf.bot
 @client.event
 async def on_ready():
     print(f"{client.user} is now online!")
-    if client.get_guild(713379747517694004):
-        channel = client.get_channel(713649107499090011)
+    if client.get_guild(BotConf.id_guild):
+        channel = client.get_channel(BotConf.id_channel_log)
         await channel.send(f"{client.user.name} is now online!")
 
 
