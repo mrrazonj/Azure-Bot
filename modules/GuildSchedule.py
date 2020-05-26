@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import time
+from multiprocessing import Process
 
 import sqlite3
 
@@ -12,13 +13,14 @@ import BotConf
 class GuildSchedule(commands.Cog):
     def __init__(self, client):
         self.client = client
+        self.process = Process(target=self.reset_daily.start())
         self.has_reset_daily = False
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.reset_daily.start()
+        self.process.start()
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=20, reconnect=True)
     async def reset_daily(self):
         log_channel = self.client.get_channel(BotConf.id_channel_log)
         notice_channel = self.client.get_channel(BotConf.id_channel_notice)
@@ -111,6 +113,14 @@ class GuildSchedule(commands.Cog):
     @reset_daily.before_loop
     async def before_reset_daily(self):
         await self.client.wait_until_ready()
+
+    @commands.command(aliases=["chkrloop"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def checkresetloop(self, ctx):
+        if self.reset_daily.get_task() is not None:
+            await ctx.channel.send(f"Attendance reset module is currently running.")
+        else:
+            await ctx.channel.send(f"Attendance reset module is offline.")
 
 
 def setup(client):
