@@ -16,10 +16,6 @@ class GuildSchedule(commands.Cog):
         self.process = Process(target=self.reset_daily.start())
         self.has_reset_daily = False
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        self.process.start()
-
     @tasks.loop(seconds=20, reconnect=True)
     async def reset_daily(self):
         log_channel = self.client.get_channel(BotConf.id_channel_log)
@@ -118,9 +114,14 @@ class GuildSchedule(commands.Cog):
     @commands.has_role(BotConf.name_role_guildmaster)
     async def checkresetloop(self, ctx):
         if self.reset_daily.get_task() is not None:
+            print(self.reset_daily.get_task())
             await ctx.channel.send(f"Attendance reset module is currently running.")
         else:
             await ctx.channel.send(f"Attendance reset module is offline.")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        self.process.start()
 
 
 def setup(client):
