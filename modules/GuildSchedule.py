@@ -19,6 +19,7 @@ class GuildSchedule(commands.Cog):
         log_channel = self.client.get_channel(BotConf.id_channel_log)
         notice_channel = self.client.get_channel(BotConf.id_channel_notice)
         id_inactive_notice_embed = 715520609890729995
+        attendance_channel = self.client.get_channel(BotConf.id_channel_attendance)
 
         reset_hour = str(BotConf.reset_hour)
         if len(reset_hour) == 1:
@@ -61,6 +62,11 @@ class GuildSchedule(commands.Cog):
                 if role.name == "Member":
                     for member in role.members:
                         await member.add_roles(to_attend)
+
+            to_attend_role = guild.get_role(BotConf.id_role_to_attend)
+            await attendance_channel.send(to_attend_role.mention)
+            ping = await attendance_channel.fetch_message(attendance_channel.last_message_id)
+            await ping.delete()
 
             if current_day == BotConf.reset_day:
                 connection = sqlite3.connect("modules/data/guild.db")
