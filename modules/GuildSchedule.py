@@ -18,6 +18,7 @@ class GuildSchedule(commands.Cog):
     async def reset_daily(self):
         log_channel = self.client.get_channel(BotConf.id_channel_log)
         notice_channel = self.client.get_channel(BotConf.id_channel_notice)
+        id_inactive_notice_embed = 715520609890729995
 
         reset_hour = str(BotConf.reset_hour)
         if len(reset_hour) == 1:
@@ -93,14 +94,28 @@ class GuildSchedule(commands.Cog):
                                  Total = 0
                           ''')
                 connection.commit()
+
+                c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
+                list_entry = c.fetchall()
                 connection.close()
 
-                list_inactive = ("\n".join(str(i) for i in list_member))
-                await notice_channel.send(f"**Inactive members penalized:**\n"
-                                          f"```css\n"
-                                          f"{list_inactive}\n"
-                                          f"```")
+                embed = discord.Embed(title="Azure Club", description="Member inactivity notice", color=0xff0000)
+                embed.set_author(name="Azure",
+                                 url="https://github.com/mrrazonj/Azure-Bot",
+                                 icon_url="https://i.imgur.com/alUOIgz.png")
 
+                list_entry_formatted = []
+                for entry in list_entry:
+                    list_entry_formatted.append(f"{entry[0]} - {entry[1]} infractions")
+
+                list_finalized = ("\n".join(str(i) for i in list_entry_formatted))
+                string_empty = "None"
+
+                embed.add_field(name=f"Members with infractions incurred:",
+                                value=f"{string_empty if not list_entry_formatted else list_finalized}")
+                embed.set_footer(text="This stub updates every Sunday at 23:10.")
+                embed_inactive_notice = await log_channel.fetch_message(id_inactive_notice_embed)
+                await embed_inactive_notice.edit(embed=embed)
             await log_channel.send("Attendance module reset!")
             self.has_reset_daily = True
 

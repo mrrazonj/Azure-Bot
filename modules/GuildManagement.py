@@ -188,8 +188,29 @@ class GuildManagement(commands.Cog):
     @commands.command()
     @commands.has_role(BotConf.name_role_guildmaster)
     async def inactiveembed(self, ctx):
-        embed = discord.Embed(title="Azure Club", description=f"Members who failed to login "
-                                                              f"{BotConf.num_attendances_required} times this week.")
+        embed = discord.Embed(title="Azure Club", description="Member inactivity notice", color=0xff0000)
+        embed.set_author(name="Azure",
+                         url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
+
+        connection = sqlite3.connect("modules/data/guild.db")
+        c = connection.cursor()
+        c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
+        list_entry = c.fetchall()
+        connection.close()
+
+        list_entry_formatted = []
+        for entry in list_entry:
+            list_entry_formatted.append(f"{entry[0]} - {entry[1]} infractions")
+
+        list_finalized = ("\n".join(str(i) for i in list_entry_formatted))
+        string_empty = "None"
+
+        embed.add_field(name=f"Members with infractions incurred:",
+                        value=f"{string_empty if not list_entry_formatted else list_finalized}")
+        embed.set_footer(text="This stub updates every Sunday at 23:10.")
+        msg_embed = await ctx.channel.fetch_message(715520609890729995)
+        await msg_embed.edit(embed=embed)
+        await ctx.message.delete()
 
 
 def setup(client):
