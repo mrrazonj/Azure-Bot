@@ -109,9 +109,10 @@ class GuildManagement(commands.Cog):
             list_member.append(member[0])
         list_inactive = ("\n".join(str(i) for i in list_member))
 
+        string_blank = "None\n"
         await ctx.channel.send(f"**Inactive Members (less than 5 check-ins for this week):**\n"
                                f"```css\n"
-                               f"{list_inactive}\n"
+                               f"{string_blank if not list_member else list_inactive}\n"
                                f"```")
         await ctx.message.delete()
 
@@ -146,6 +147,49 @@ class GuildManagement(commands.Cog):
                                f"{list_inactive}\n"
                                f"```")
         await ctx.message.delete()
+
+    @commands.command()
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def welcomeembed(self, ctx):
+        embed = discord.Embed(title="Azure Club", description="Screening channel for members", color=0x0096ff)
+        embed.set_author(name="Azure",
+                         url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
+        embed.set_thumbnail(url="https://i.imgur.com/w7jhGua.png")
+        embed.add_field(name="Why is this necessary?", value=">>> 1. To make it easier for us to discuss what to do "
+                                                             "for events.\n\n"
+                                                             "2. To make it easier for us to look for party members or "
+                                                             "make schedules in doing events. \n\n"
+                                                             "3. To make it easier for me to track inactive "
+                                                             "members. \n\n"
+                                                             "These are all possible through this bot made specially "
+                                                             "for this guild.",
+                        inline=False)
+        embed.add_field(name="What to do now?", value=">>> 1. Change your nickname to match your in-game character "
+                                                      "name.\n\n"
+                                                      "2. Wait for a guildmaster to process your verification.",
+                        inline=False)
+        embed.set_footer(text="Please be patient if no guildmaster is currently online to process your verification.")
+        await ctx.channel.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command()
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def attendanceembed(self, ctx):
+        embed = discord.Embed(title="Azure Club", description=f"Please type {BotConf.bot_prefix}checkin or "
+                                                              f"{BotConf.bot_prefix}ci to record your attendance "
+                                                              f"for today.",
+                              color=0x0096ff)
+        embed.set_author(name="Azure",
+                         url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
+        embed.set_footer(text="Attendance module resets at 23:10 Server Time.")
+        await ctx.channel.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command()
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def inactiveembed(self, ctx):
+        embed = discord.Embed(title="Azure Club", description=f"Members who failed to login "
+                                                              f"{BotConf.num_attendances_required} times this week.")
 
 
 def setup(client):

@@ -3,7 +3,6 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import time
-from multiprocessing import Process
 
 import sqlite3
 
@@ -13,7 +12,6 @@ import BotConf
 class GuildSchedule(commands.Cog):
     def __init__(self, client):
         self.client = client
-        self.process = Process(target=self.reset_daily.start())
         self.has_reset_daily = False
 
     @tasks.loop(seconds=20, reconnect=True)
@@ -121,7 +119,8 @@ class GuildSchedule(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        self.process.start()
+        self.reset_daily.start()
+        print("Attendance module online.")
 
 
 def setup(client):

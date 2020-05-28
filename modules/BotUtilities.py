@@ -3,6 +3,8 @@ from discord.ext import commands
 
 import sqlite3
 
+import BotConf
+
 
 class GeneralUtilities(commands.Cog):
 
@@ -18,7 +20,9 @@ class GeneralUtilities(commands.Cog):
 
     @commands.command(aliases=["clear", "purge", "cls"])
     async def clean(self, ctx, amount=25):
-        await ctx.channel.purge(limit=amount)
+        async for msg in ctx.channel.history(limit=amount):
+            if not msg.embeds:
+                await msg.delete()
 
     @commands.command(aliases=["lsr"])
     async def listrole(self, ctx, *, target_role):

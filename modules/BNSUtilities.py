@@ -15,6 +15,10 @@ class BNSUtilities(commands.Cog):
         channel_world_boss = self.client.get_channel(id_world_boss_channel)
         embed_fbt = discord.Embed(color=0x27d827)
         embed_fbt.title = "Field Boss Timers"
+        embed_fbt.description = "```\n" \
+                                "Use `addworldboss <Boss name, no spaces> <# of minutes until spawn> to log " \
+                                "an entry for the guild. You can also use `awb.\n" \
+                                "```"
         embed_fbt.set_author(name="Azure", url="https://github.com/mrrazonj/Azure-Bot/",
                              icon_url="https://i.imgur.com/tFuM5gd.png")
         embed_fbt.set_thumbnail(url="https://i.imgur.com/XUldg3M.png")
@@ -34,7 +38,6 @@ class BNSUtilities(commands.Cog):
                 index += 1
 
             string_boss_column = ("\n".join(str(i) for i in list_boss_strings))
-            print(string_boss_column)
             embed_fbt.add_field(name="Boss - Spawn timer", value=string_boss_column, inline=False)
 
         embed_fbt.set_footer(text="This information stub updates every 1 minute.")
