@@ -38,22 +38,18 @@ class DragonRajaUtilities(commands.Cog):
         if current_time == time_salon_brain:
             await channel_reminder.send(role_salon_brain.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            time.sleep(3)
             await msg.delete()
         elif current_time == time_event_pve:
             await channel_reminder.send(role_event_pve.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            time.sleep(3)
             await msg.delete()
         elif current_time == time_gossip:
             await channel_reminder.send(role_gossip.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            time.sleep(3)
             await msg.delete()
         elif current_time == time_event_pvp:
             await channel_reminder.send(role_event_pvp.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            time.sleep(3)
             await msg.delete()
 
     @timed_event_ping.before_loop

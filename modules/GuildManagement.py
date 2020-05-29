@@ -51,7 +51,7 @@ class GuildManagement(commands.Cog):
                                      "masters attend to your verification...")
 
     @commands.command(aliases=["vm"])
-    @commands.has_role(BotConf.name_role_guildmaster)
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
     async def verify(self, ctx, *, member: discord.Member):
         connect = sqlite3.connect("modules/data/guild.db")
         c = connect.cursor()
