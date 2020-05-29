@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands, tasks
+import asyncio
 import os
 
 import BotConf
@@ -18,6 +19,7 @@ async def on_ready():
         role_gm = guild.get_role(BotConf.dict_id_role_general["GuildMaster"])
         await channel.send(role_gm.mention)
         msg = await channel.fetch_message(channel.last_message_id)
+        await asyncio.sleep(3)
         await msg.delete()
 
 
