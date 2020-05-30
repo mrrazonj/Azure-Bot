@@ -147,10 +147,10 @@ class DragonRajaUtilities(commands.Cog):
                                           f"members. Coordinate with each other bearing in mind "
                                           f"each other's classes.\n\n"
                                           f"To add yourself to any of the lists, type "
-                                          f"`.lfp <event-number>`\n\n"
+                                          f"`.lfp event-number`\n\n"
                                           f"The event numbers and corresponding events are as follows:\n\n"
                                           f"{string_event_formatted}\n"
-                                          f"To remove yourself, use `.nlfp <event-number>`",
+                                          f"To remove yourself, use `.nlfp event-number`",
                               color=0x0096ff)
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
@@ -232,10 +232,10 @@ class DragonRajaUtilities(commands.Cog):
                                           f"members. Coordinate with each other bearing in mind "
                                           f"each other's classes.\n\n"
                                           f"To add yourself to any of the lists, type "
-                                          f"`.lfp <event-number>`\n\n"
+                                          f"`.lfp event-number`\n\n"
                                           f"The event numbers and corresponding events are as follows:\n\n"
                                           f"{string_event_formatted}\n"
-                                          f"To remove yourself, use `.nlfp <event-number>`",
+                                          f"To remove yourself, use `.nlfp event-number`",
                               color=0x0096ff)
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
