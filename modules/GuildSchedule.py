@@ -120,7 +120,7 @@ class GuildSchedule(commands.Cog):
                 embed.add_field(name=f"Members with infractions incurred:",
                                 value=f"{string_empty if not list_entry_formatted else list_finalized}")
                 embed.set_footer(text="This stub updates every Sunday at 23:10.")
-                embed_inactive_notice = await log_channel.fetch_message(id_inactive_notice_embed)
+                embed_inactive_notice = await notice_channel.fetch_message(id_inactive_notice_embed)
                 await embed_inactive_notice.edit(embed=embed)
             await log_channel.send("Attendance module reset!")
             self.has_reset_daily = True
