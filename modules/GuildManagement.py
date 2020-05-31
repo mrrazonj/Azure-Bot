@@ -87,12 +87,12 @@ class GuildManagement(commands.Cog):
         connect.close()
         to_attend = get(ctx.guild.roles, name=BotConf.name_role_to_attend)
         await ctx.author.remove_roles(to_attend)
+        await ctx.message.delete()
         if ctx.author.dm_channel is None:
             await ctx.author.create_dm()
         await ctx.author.dm_channel.send(f"Thank you for logging in today {ctx.author.display_name}, the guild "
                                          f"appreciates you for being active! You have currently logged in "
                                          f"{total[0]} time(s) this week.")
-        await ctx.message.delete()
 
     @commands.command(aliases=["grc"])
     @commands.has_role(BotConf.name_role_member)

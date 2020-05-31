@@ -4,6 +4,7 @@ import asyncio
 
 import random
 import time
+import shelve
 
 import BotConf
 
@@ -12,20 +13,27 @@ class DragonRajaUtilities(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-        self.dict_event_members = {
-            "Good Times": [],
-            "Dragonhunt": [],
-            "Radiant - Normal": [],
-            "Radiant - Hard": [],
-            "Nirvana - Normal": [],
-            "Nirvana - Hard": []
-        }
+        save_data = shelve.open("./modules/data/party")
 
+        self.dict_event_members = {}
+        if not save_data:
+            self.dict_event_members = {
+                "Good Times": [],
+                "Dragonhunt": [],
+                "Radiant - Normal": [],
+                "Radiant - Hard": [],
+                "Nirvana - Normal": [],
+                "Nirvana - Hard": []
+            }
+        else:
+            for key, value in save_data.items():
+                self.dict_event_members[key] = value
+
+        save_data.close()
         self.dict_event_dungeons = {}
-        index = 1
-        for key, value in self.dict_event_members.items():
-            self.dict_event_dungeons[index] = key
-            index += 1
+
+        for idx, (key, value) in enumerate(self.dict_event_members.items(), start=1):
+            self.dict_event_dungeons[idx] = key
 
     @commands.command(aliases=["iof"])
     async def iceorfire(self, ctx):
@@ -131,8 +139,16 @@ class DragonRajaUtilities(commands.Cog):
                 member_role = role
 
         code = int(event_code)
-        self.dict_event_members[self.dict_event_dungeons[code]].append(f"{ctx.author.display_name} - "
-                                                                       f"{member_role.name}")
+        string_entry = f"{ctx.author.display_name} - {member_role.name}"
+        if string_entry in self.dict_event_members[self.dict_event_dungeons[code]]:
+            await ctx.message.delete()
+            return
+        self.dict_event_members[self.dict_event_dungeons[code]].append(string_entry)
+
+        save_data = shelve.open("./modules/data/party")
+        for key, value in self.dict_event_members.items():
+            save_data[key] = value
+        save_data.close()
 
         channel_lfp = self.client.get_channel(BotConf.dict_id_channels["LFP"])
         embed_msg = await channel_lfp.fetch_message(716222933839904880)
@@ -181,12 +197,25 @@ class DragonRajaUtilities(commands.Cog):
             if role in ctx.author.roles:
                 member_role = role
 
+        code = int(event_code)
+        string_entry = f"{ctx.author.display_name} - {member_role.name}"
+        if string_entry not in self.dict_event_members[self.dict_event_dungeons[code]]:
+            await ctx.message.delete()
+            return
+        self.dict_event_members[self.dict_event_dungeons[code]].remove(string_entry)
+
+        save_data = shelve.open("./modules/data/party")
+        for key, value in self.dict_event_members.items():
+            save_data[key] = value
+        save_data.close()
+
         channel_lfp = self.client.get_channel(BotConf.dict_id_channels["LFP"])
         embed_msg = await channel_lfp.fetch_message(716222933839904880)
 
         string_event_formatted = ""
         for key, value in self.dict_event_dungeons.items():
             string_event_formatted += f"{key} - {value}\n"
+
 
         embed = discord.Embed(title="Azure Club",
                               description=f"These are lists of members per dungeon/event that "
@@ -212,9 +241,6 @@ class DragonRajaUtilities(commands.Cog):
         embed.set_footer(text="This stub refreshes every 5 seconds.")
         await embed_msg.edit(embed=embed)
 
-        code = int(event_code)
-        self.dict_event_members[self.dict_event_dungeons[code]].remove(f"{ctx.author.display_name} - "
-                                                                       f"{member_role.name}")
         await ctx.message.delete()
 
     @tasks.loop(seconds=5.0)
