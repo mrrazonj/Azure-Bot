@@ -12,9 +12,8 @@ class BNSUtilities(commands.Cog):
 
     @tasks.loop(minutes=1)
     async def update_world_boss_embed(self):
-        channel_world_boss = self.client.get_channel(id_world_boss_channel)
         ch_world_boss = self.client.get_channel(id_world_boss_channel)
-        world_boss_embed = ch_world_boss.fetch_message(716255903761825803)
+        embed_msg = await ch_world_boss.fetch_message(716255903761825803)
 
         embed_fbt = discord.Embed(color=0x27d827)
         embed_fbt.title = "Field Boss Timers"
@@ -44,7 +43,7 @@ class BNSUtilities(commands.Cog):
             embed_fbt.add_field(name="Boss - Spawn timer", value=string_boss_column, inline=False)
 
         embed_fbt.set_footer(text="This information stub updates every 1 minute.")
-        await world_boss_embed.edit(embed=embed_fbt)
+        await embed_msg.edit(embed=embed_fbt)
 
     @update_world_boss_embed.before_loop
     async def before_update(self):
@@ -62,9 +61,8 @@ class BNSUtilities(commands.Cog):
         buffer = [boss_name, int(spawn_timer)]
         self.world_boss_and_timer_list.append(buffer)
 
-        channel_world_boss = self.client.get_channel(id_world_boss_channel)
         ch_world_boss = self.client.get_channel(id_world_boss_channel)
-        world_boss_embed = ch_world_boss.fetch_message(716255903761825803)
+        embed_msg = await ch_world_boss.fetch_message(716255903761825803)
 
         embed_fbt = discord.Embed(color=0x27d827)
         embed_fbt.title = "Field Boss Timers"
@@ -82,7 +80,7 @@ class BNSUtilities(commands.Cog):
         embed_fbt.add_field(name="Boss - Spawn timer", value=string_boss_column, inline=False)
         embed_fbt.set_footer(text="This information stub updates every 1 minute.")
 
-        await world_boss_embed.edit(embed=embed_fbt)
+        await embed_msg.edit(embed=embed_fbt)
         await ctx.message.delete()
 
     @commands.Cog.listener()
