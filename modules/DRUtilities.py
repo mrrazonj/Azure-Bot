@@ -23,7 +23,9 @@ class DragonRajaUtilities(commands.Cog):
                 "Radiant - Normal": [],
                 "Radiant - Hard": [],
                 "Nirvana - Normal": [],
-                "Nirvana - Hard": []
+                "Nirvana - Hard": [],
+                "Doom - Normal": [],
+                "Doom - Hard": []
             }
         else:
             for key, value in save_data.items():
@@ -51,8 +53,9 @@ class DragonRajaUtilities(commands.Cog):
         role_gossip = guild.get_role(BotConf.dict_id_role_events["Gossip"])
         role_event_pvp = guild.get_role(BotConf.dict_id_role_events["ClubPVP"])
         role_liberty_day = guild.get_role(BotConf.dict_id_role_events["DayOfLiberty"])
-        role_irritated_blood = guild.get_role(BotConf.dict_id_role_events["IrritatedBlood"])
+        timed_dungeon_pve = guild.get_role(BotConf.dict_id_role_events["IrritatedBlood"])
         role_wboss_borgman = guild.get_role(BotConf.dict_id_role_events["WBBorgman"])
+        role_wboss_onimaru = guild.get_role(BotConf.dict_id_role_events["WBOnimaru"])
 
         time_liberty_day = "12:00"
         time_salon_brain = "13:00"
@@ -65,6 +68,8 @@ class DragonRajaUtilities(commands.Cog):
                                    "16:30",
                                    "20:30",
                                    "00:30"]
+        list_time_onimaru_spawn = ["15:40",
+                                   "23:40"]
 
         t = time.localtime()
         current_time = time.strftime("%H:%M", t)
@@ -85,7 +90,7 @@ class DragonRajaUtilities(commands.Cog):
             await asyncio.sleep(5)
             await msg.delete()
         if current_time in list_time_irritated_blood:
-            await channel_reminder.send(role_irritated_blood.mention)
+            await channel_reminder.send(timed_dungeon_pve.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
             await asyncio.sleep(5)
             await msg.delete()
@@ -101,6 +106,11 @@ class DragonRajaUtilities(commands.Cog):
             await msg.delete()
         if current_time in list_time_borgman_spawn:
             await channel_reminder.send(role_wboss_borgman.mention)
+            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
+            await asyncio.sleep(5)
+            await msg.delete()
+        if current_time in list_time_onimaru_spawn:
+            await channel_reminder.send(role_wboss_onimaru.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
             await asyncio.sleep(5)
             await msg.delete()
