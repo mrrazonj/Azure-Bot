@@ -101,6 +101,16 @@ class GuildSchedule(commands.Cog):
                           ''')
                 connection.commit()
 
+                role_leniency: discord.Role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
+                list_leniency = role_leniency.members()
+                for member in list_leniency:
+                    member_lenient: discord.Member = member
+                    c.execute(f'''UPDATE guild
+                                  SET Total = 5
+                                  WHERE Username = '{member_lenient.display_name}'
+                               ''')
+                    connection.commit()
+
                 c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
                 list_entry = c.fetchall()
                 connection.close()
