@@ -46,22 +46,22 @@ class DragonRajaUtilities(commands.Cog):
     @tasks.loop(minutes=1.0)
     async def timed_event_ping(self):
         guild = self.client.get_guild(BotConf.id_guild)
-        channel_reminder = guild.get_channel(BotConf.dict_id_channels["Reminder"])
+        channel_reminder = self.client.get_channel(BotConf.dict_id_channels["Reminder"])
 
         role_salon_brain = guild.get_role(BotConf.dict_id_role_events["Salon"])
         role_event_pve = guild.get_role(BotConf.dict_id_role_events["ClubPVE"])
         role_gossip = guild.get_role(BotConf.dict_id_role_events["Gossip"])
         role_event_pvp = guild.get_role(BotConf.dict_id_role_events["ClubPVP"])
         role_liberty_day = guild.get_role(BotConf.dict_id_role_events["DayOfLiberty"])
-        timed_dungeon_pve = guild.get_role(BotConf.dict_id_role_events["IrritatedBlood"])
+        timed_dungeon_pve = guild.get_role(BotConf.dict_id_role_events["TimedPVEDungeon"])
         role_wboss_borgman = guild.get_role(BotConf.dict_id_role_events["WBBorgman"])
         role_wboss_onimaru = guild.get_role(BotConf.dict_id_role_events["WBOnimaru"])
 
         time_liberty_day = "12:00"
         time_salon_brain = "13:00"
         time_event_pve = "13:30"
-        list_time_irritated_blood = ["13:00",
-                                     "20:00"]
+        list_time_limited_pve_dungeon = ["13:00",
+                                         "20:00"]
         time_gossip = "21:00"
         time_event_pvp = "22:00"
         list_time_borgman_spawn = ["12:30",
@@ -89,7 +89,7 @@ class DragonRajaUtilities(commands.Cog):
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
             await asyncio.sleep(5)
             await msg.delete()
-        if current_time in list_time_irritated_blood:
+        if current_time in list_time_limited_pve_dungeon:
             await channel_reminder.send(timed_dungeon_pve.mention)
             msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
             await asyncio.sleep(5)
@@ -181,14 +181,15 @@ class DragonRajaUtilities(commands.Cog):
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
 
-        for key, value in self.dict_event_dungeons.items():
+        for idx, (key, value) in enumerate(self.dict_event_dungeons.items(), start=1):
             string_list_format = ("\n".join(str(i) for i in self.dict_event_members[value]))
             string_blank = "None"
-            embed.add_field(name=f"{value}",
+            embed.add_field(name=f"{idx} - {value}",
                             value=f"{string_blank if not self.dict_event_members[value] else string_list_format}",
                             inline=False)
 
-        embed.set_footer(text="This stub refreshes every 5 seconds.")
+        embed.set_footer(text="This stub refreshes every 5 seconds. By putting your name in this list, you agree to be "
+                              "pinged any time.")
         await embed_msg.edit(embed=embed)
         await ctx.message.delete()
 
@@ -226,7 +227,6 @@ class DragonRajaUtilities(commands.Cog):
         for key, value in self.dict_event_dungeons.items():
             string_event_formatted += f"{key} - {value}\n"
 
-
         embed = discord.Embed(title="Azure Club",
                               description=f"These are lists of members per dungeon/event that "
                                           f"haven't finished them yet and are looking for party "
@@ -241,14 +241,15 @@ class DragonRajaUtilities(commands.Cog):
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
 
-        for key, value in self.dict_event_dungeons.items():
+        for idx, (key, value) in enumerate(self.dict_event_dungeons.items(), start=1):
             string_list_format = ("\n".join(str(i) for i in self.dict_event_members[value]))
             string_blank = "None"
-            embed.add_field(name=f"{value}",
+            embed.add_field(name=f"{idx} - {value}",
                             value=f"{string_blank if not self.dict_event_members[value] else string_list_format}",
                             inline=False)
 
-        embed.set_footer(text="This stub refreshes every 5 seconds.")
+        embed.set_footer(text="This stub refreshes every 5 seconds. By putting your name in this list, you agree to be "
+                              "pinged any time.")
         await embed_msg.edit(embed=embed)
 
         await ctx.message.delete()
@@ -276,14 +277,15 @@ class DragonRajaUtilities(commands.Cog):
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
 
-        for key, value in self.dict_event_dungeons.items():
+        for idx, (key, value) in enumerate(self.dict_event_dungeons.items(), start=1):
             string_list_format = ("\n".join(str(i) for i in self.dict_event_members[value]))
             string_blank = "None"
-            embed.add_field(name=f"{value}",
+            embed.add_field(name=f"{idx} - {value}",
                             value=f"{string_blank if not self.dict_event_members[value] else string_list_format}",
                             inline=False)
 
-        embed.set_footer(text="This stub refreshes every 5 seconds.")
+        embed.set_footer(text="This stub refreshes every 5 seconds. By putting your name in this list, you agree to be "
+                              "pinged any time.")
         await embed_msg.edit(embed=embed)
 
     @commands.Cog.listener()

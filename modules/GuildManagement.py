@@ -212,6 +212,82 @@ class GuildManagement(commands.Cog):
         await msg_embed.edit(embed=embed)
         await ctx.message.delete()
 
+    @commands.command()
+    async def directoryembed(self, ctx):
+        channel_directory = self.client.get_channel(BotConf.dict_id_channels["Directory"])
+
+        embed = discord.Embed(title="Azure Club", description="Directory for Azure's Discord", color=0x2decec)
+        embed.set_author(name="Azure",
+                         url="https://www.github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
+        embed.set_thumbnail(url="https://i.imgur.com/4AwatSh.png")
+        embed.add_field(name="#attendance",
+                        value="This is where you check-in daily to record your attendance. If you can see this "
+                              "channel, then that means you still have yet to `checkin` for the day.",
+                        inline=False)
+        embed.add_field(name="#notices",
+                        value="Check here for any new announcement or news regarding the game or our club.",
+                        inline=False)
+        embed.add_field(name="#general",
+                        value="This is our main chat room, anything related to the game, or state of our club can be "
+                              "discussed in here.",
+                        inline=False)
+        embed.add_field(name="#off-topic",
+                        value="Everything not about the game, goes in here. You can chat with anyone about anything. ",
+                        inline=False)
+        embed.add_field(name="#nsfw", value="Not Safe For Work. Adult's channel ( ͡° ͜ʖ ͡°)", inline=False)
+        embed.add_field(name="#quiz-event-answers",
+                        value="Contains the links to the answer keys for Salon/Brain and Gossip. Other quiz events may "
+                              "be added in the future.",
+                        inline=False)
+        embed.add_field(name="#tale-walkthrough",
+                        value="Contains the links to the guides on how to start and complete the tales/anecdotes in "
+                              "the game.",
+                        inline=False)
+        embed.add_field(name="#whale-101",
+                        value="Contains the links to the guides on how to spend your money wisely on this game",
+                        inline=False)
+        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=True)
+        embed.add_field(name="#reminders",
+                        value="You can get roles here so you can be notified if a certain event you want is starting.",
+                        inline=False)
+        embed.add_field(name="#party-builder",
+                        value="You can get your class role from here, and you can enter your name to any of the "
+                              "categories if you're looking for a group to play with. Remember to ping/mention others "
+                              "if you can currently build a working team.",
+                        inline=False)
+        embed.add_field(name="#world-boss-timers", value="Deprecated channel, left over from Blade and Soul",
+                        inline=False)
+        embed.add_field(name="#bot-commands-channel", value="For bot usage", inline=False)
+        embed.set_footer(text="Please remember to respect other members at all times. English-only please. Thank you!")
+
+        await channel_directory.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command(aliases=["glen"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
+    async def giveleniency(self, ctx, member: discord.Member):
+        guild = self.client.get_guild(BotConf.id_guild)
+        leniency_role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
+
+        connection = sqlite3.connect("modules/data/guild.db")
+        c = connection.cursor()
+        c.execute(f'''UPDATE guild
+                      SET Total = Total + {BotConf.num_attendances_required}
+                      WHERE Username = {member.display_name}
+                   ''')
+        connection.commit()
+        connection.close()
+
+        await member.add_roles(leniency_role)
+        await ctx.message.delete()
+
+    @commands.command(aliases=["rlen"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
+    async def remove_leniency(self, ctx, member: discord.Member):
+        guild = self.client.get_guild(BotConf.id_guild)
+        leniency_role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
+        await member.remove_roles(leniency_role)
+        await ctx.message.delete()
 
 def setup(client):
     client.add_cog(GuildManagement(client))
