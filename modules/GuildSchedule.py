@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands, tasks
 from discord.utils import get
 
-import time
+import datetime
+from pytz import timezone
 
 import sqlite3
 
@@ -47,9 +48,10 @@ class GuildSchedule(commands.Cog):
         flag_reset_time = f"{flag_reset_hour}:{flag_reset_minute}"
         reset_time = f"{reset_hour}:{reset_minute}"
 
-        t = time.localtime()
-        current_time = time.strftime("%H:%M", t)
-        current_day = time.strftime("%A", t)
+        server_time = timezone("Asia/Jakarta")
+        t = datetime.datetime.now(server_time)
+        current_time = t.strftime("%H:%M")
+        current_day = t.strftime("%A")
 
         if current_time == flag_reset_time:
             print("Flags Reset")
