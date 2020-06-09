@@ -17,7 +17,7 @@ class GuildSchedule(commands.Cog):
     @tasks.loop(seconds=20, reconnect=True)
     async def reset_daily(self):
         log_channel = self.client.get_channel(BotConf.id_channel_log)
-        notice_channel = self.client.get_channel(BotConf.id_channel_notice)
+        notice_channel: discord.TextChannel = self.client.get_channel(BotConf.id_channel_notice)
         id_inactive_notice_embed = 715520609890729995
         attendance_channel = self.client.get_channel(BotConf.id_channel_attendance)
 
@@ -102,7 +102,7 @@ class GuildSchedule(commands.Cog):
                 connection.commit()
 
                 role_leniency: discord.Role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
-                list_leniency = role_leniency.members()
+                list_leniency = role_leniency.members
                 for member in list_leniency:
                     member_lenient: discord.Member = member
                     c.execute(f'''UPDATE guild
@@ -130,8 +130,10 @@ class GuildSchedule(commands.Cog):
                 embed.add_field(name=f"Members with infractions incurred:",
                                 value=f"{string_empty if not list_entry_formatted else list_finalized}")
                 embed.set_footer(text="This stub updates every Sunday at 23:10.")
+
                 embed_inactive_notice = await notice_channel.fetch_message(id_inactive_notice_embed)
                 await embed_inactive_notice.edit(embed=embed)
+
             await log_channel.send("Attendance module reset!")
             self.has_reset_daily = True
 

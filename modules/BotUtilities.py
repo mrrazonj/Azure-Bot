@@ -21,7 +21,7 @@ class GeneralUtilities(commands.Cog):
     @commands.command(aliases=["clear", "purge", "cls"])
     async def clean(self, ctx, amount=25):
         async for msg in ctx.channel.history(limit=amount):
-            if not msg.embeds:
+            if not msg.embeds and not msg.pinned:
                 await msg.delete()
 
     @commands.command(aliases=["lsr"])

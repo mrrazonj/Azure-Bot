@@ -51,7 +51,7 @@ class GuildManagement(commands.Cog):
                                      "masters attend to your verification...")
 
     @commands.command(aliases=["vm"])
-    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
     async def verify(self, ctx, *, member: discord.Member):
         connect = sqlite3.connect("modules/data/guild.db")
         c = connect.cursor()
@@ -67,6 +67,26 @@ class GuildManagement(commands.Cog):
         await member.add_roles(member_role)
         await member.add_roles(to_attend)
         await ctx.message.delete()
+
+    @commands.command(aliases=["rnm"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
+    async def rename(self, ctx, member: discord.Member, *, new_name):
+        connect = sqlite3.connect("modules/data/guild.db")
+        c = connect.cursor()
+        c.execute(f'''UPDATE OR IGNORE infractions
+                      SET Username = '{new_name}'
+                      WHERE Username = '{member.display_name}'
+                   ''')
+        connect.commit()
+        c.execute(f'''UPDATE OR IGNORE guild
+                      SET Username = '{new_name}'
+                      WHERE Username = '{member.display_name}'
+                   ''')
+        connect.commit()
+
+        await member.edit(nick=f"{new_name}")
+        await ctx.message.delete()
+
 
     @commands.command(aliases=["ci"])
     @commands.has_role(BotConf.name_role_to_attend)
@@ -263,6 +283,80 @@ class GuildManagement(commands.Cog):
         await channel_directory.send(embed=embed)
         await ctx.message.delete()
 
+    @commands.command()
+    async def updatedirectory(self, ctx):
+        channel_directory: discord.TextChannel = self.client.get_channel(BotConf.dict_id_channels["Directory"])
+        embed_directory = await channel_directory.fetch_message(718139411086442516)
+
+        embed = discord.Embed(title="Azure Club", description="Directory for Azure's Discord", color=0x2decec)
+        embed.set_author(name="Azure",
+                         url="https://www.github.com/mrrazonj/Azure-Bot",
+                         icon_url="https://i.imgur.com/alUOIgz.png")
+        embed.set_thumbnail(url="https://i.imgur.com/4AwatSh.png")
+
+        embed.add_field(name="#attendance",
+                        value="This is where you check-in daily to record your attendance. If you can see this "
+                              "channel, then that means you still have yet to `checkin` for the day.",
+                        inline=False)
+
+        embed.add_field(name="#notices",
+                        value="Check here for any new announcement or news regarding the game or our club.",
+                        inline=False)
+
+        embed.add_field(name="#inactivity-submission",
+                        value="This is were you would request a break from the game for daily activity. Mention "
+                              "XenoXIII, or AkshayAg in your message, include also the amount of time you need, "
+                              "and optionally, the reason why. Please do not abuse this feature.",
+                        inline=False)
+
+        embed.add_field(name="#general",
+                        value="This is our main chat room, anything related to the game, or state of our club can be "
+                              "discussed in here.",
+                        inline=False)
+
+        embed.add_field(name="#off-topic",
+                        value="Everything not about the game, goes in here. You can chat with anyone about anything. ",
+                        inline=False)
+
+        embed.add_field(name="#nsfw", value="Not Safe For Work. Adult's channel ( ͡° ͜ʖ ͡°)", inline=False)
+
+        embed.add_field(name="#quiz-event-answers",
+                        value="Contains the links to the answer keys for Salon/Brain and Gossip. Other quiz events may "
+                              "be added in the future.",
+                        inline=False)
+
+        embed.add_field(name="#tale-walkthrough",
+                        value="Contains the links to the guides on how to start and complete the tales/anecdotes in "
+                              "the game.",
+                        inline=False)
+
+        embed.add_field(name="#whale-101",
+                        value="Contains the links to the guides on how to spend your money wisely on this game",
+                        inline=False)
+
+        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=True)
+
+        embed.add_field(name="#reminders",
+                        value="You can get roles here so you can be notified if a certain event you want is starting.",
+                        inline=False)
+
+        embed.add_field(name="#party-builder",
+                        value="You can get your class role from here, and you can enter your name to any of the "
+                              "categories if you're looking for a group to play with. Remember to ping/mention others "
+                              "if you can currently build a working team.",
+                        inline=False)
+
+        embed.add_field(name="#world-boss-timers", value="Deprecated channel, left over from Blade and Soul",
+                        inline=False)
+
+        embed.add_field(name="#bot-commands-channel", value="For bot usage", inline=False)
+
+        embed.set_footer(
+            text="Please remember to respect other members at all times. English-only please. Thank you!")
+
+        await embed_directory.edit(embed=embed)
+        await ctx.message.delete()
+
     @commands.command(aliases=["glen"])
     @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
     async def giveleniency(self, ctx, member: discord.Member):
@@ -273,7 +367,7 @@ class GuildManagement(commands.Cog):
         c = connection.cursor()
         c.execute(f'''UPDATE guild
                       SET Total = Total + {BotConf.num_attendances_required}
-                      WHERE Username = {member.display_name}
+                      WHERE Username = '{member.display_name}'
                    ''')
         connection.commit()
         connection.close()
@@ -288,6 +382,37 @@ class GuildManagement(commands.Cog):
         leniency_role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
         await member.remove_roles(leniency_role)
         await ctx.message.delete()
+
+    @commands.command(aliases=["uinf"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
+    async def update_infractions(self, ctx):
+        channel_notice: discord.TextChannel = self.client.get_channel(BotConf.id_channel_notice)
+
+        connect = sqlite3.connect("modules/data/guild.db")
+        c = connect.cursor()
+        c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
+        list_entry = c.fetchall()
+        connect.close()
+
+        embed = discord.Embed(title="Azure Club", description="Member inactivity notice", color=0xff0000)
+        embed.set_author(name="Azure",
+                         url="https://github.com/mrrazonj/Azure-Bot",
+                         icon_url="https://i.imgur.com/alUOIgz.png")
+
+        list_entry_formatted = []
+        for entry in list_entry:
+            list_entry_formatted.append(f"{entry[0]} - {entry[1]} infractions")
+
+        list_finalized = ("\n".join(str(i) for i in list_entry_formatted))
+        string_empty = "None"
+
+        embed.add_field(name=f"Members with infractions incurred:",
+                        value=f"{string_empty if not list_entry_formatted else list_finalized}")
+        embed.set_footer(text="This stub updates every Sunday at 23:10.")
+        msg = await channel_notice.fetch_message(715520609890729995)
+        await msg.edit(embed=embed)
+        await ctx.message.delete()
+
 
 def setup(client):
     client.add_cog(GuildManagement(client))

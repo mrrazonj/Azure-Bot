@@ -37,6 +37,14 @@ class GuildUtilities(commands.Cog):
                 await ctx.channel.send(f"{member.display_name} has checked-in {total[0]} time(s) this week!")
                 await ctx.message.delete()
 
+    @commands.Cog.listener()
+    async def on_message(self, msg: discord.Message):
+        sender: discord.Member = msg.author
+        channel: discord.TextChannel = msg.channel
+        if msg.mention_everyone:
+            await channel.send(f"Please do not mention @~~everyone~~. {sender.mention}'s infractions have increased "
+                               f"by 1!")
+
 
 def setup(client):
     client.add_cog(GuildUtilities(client))
