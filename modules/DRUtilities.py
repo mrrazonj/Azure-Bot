@@ -3,7 +3,8 @@ from discord.ext import commands, tasks
 import asyncio
 
 import random
-import time
+import datetime
+from pytz import timezone
 import shelve
 
 import BotConf
@@ -57,22 +58,23 @@ class DragonRajaUtilities(commands.Cog):
         role_wboss_borgman = guild.get_role(BotConf.dict_id_role_events["WBBorgman"])
         role_wboss_onimaru = guild.get_role(BotConf.dict_id_role_events["WBOnimaru"])
 
-        time_liberty_day = "12:00"
-        time_salon_brain = "13:00"
-        time_event_pve = "13:30"
-        list_time_limited_pve_dungeon = ["13:00",
-                                         "20:00"]
-        time_gossip = "21:00"
-        time_event_pvp = "22:00"
-        list_time_borgman_spawn = ["12:30",
-                                   "16:30",
-                                   "20:30",
-                                   "00:30"]
-        list_time_onimaru_spawn = ["15:40",
-                                   "23:40"]
+        time_liberty_day = "11:00"
+        time_salon_brain = "12:00"
+        time_event_pve = "12:30"
+        list_time_limited_pve_dungeon = ["12:00",
+                                         "19:00"]
+        time_gossip = "20:00"
+        time_event_pvp = "21:00"
+        list_time_borgman_spawn = ["11:30",
+                                   "15:30",
+                                   "19:30",
+                                   "23:30"]
+        list_time_onimaru_spawn = ["14:40",
+                                   "22:40"]
 
-        t = time.localtime()
-        current_time = time.strftime("%H:%M", t)
+        server_time = timezone("Asia/Jakarta")
+        t = datetime.datetime.now(server_time)
+        current_time = t.strftime("%H:%M")
 
         if current_time == time_liberty_day:
             await channel_reminder.send(role_liberty_day.mention)

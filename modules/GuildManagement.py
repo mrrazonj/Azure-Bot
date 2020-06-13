@@ -3,37 +3,10 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import sqlite3
-import time
+import datetime
+from pytz import timezone
 
 import BotConf
-
-connect = sqlite3.connect("modules/data/guild.db")
-c = connect.cursor()
-
-c.execute('''CREATE TABLE IF NOT EXISTS guild
-            (
-             Username text primary key,
-             Monday int,
-             Tuesday int,
-             Wednesday int,
-             Thursday int,
-             Friday int,
-             Saturday int,
-             Sunday int,
-             Total int default 0)
-           ''')
-
-c.execute('''CREATE TABLE IF NOT EXISTS infractions
-            (
-             Username text primary key,
-             Penalties int DEFAULT 0,
-                FOREIGN KEY (Username)
-                    REFERENCES guild (USERNAME)
-            )
-           ''')
-
-connect.close()
-
 
 class GuildManagement(commands.Cog):
 
@@ -53,7 +26,7 @@ class GuildManagement(commands.Cog):
     @commands.command(aliases=["vm"])
     @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
     async def verify(self, ctx, *, member: discord.Member):
-        connect = sqlite3.connect("modules/data/guild.db")
+        connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute(f'''INSERT INTO guild (Username, Total)
                       VALUES ('{member.display_name}', 7)
@@ -71,7 +44,7 @@ class GuildManagement(commands.Cog):
     @commands.command(aliases=["rnm"])
     @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
     async def rename(self, ctx, member: discord.Member, *, new_name):
-        connect = sqlite3.connect("modules/data/guild.db")
+        connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute(f'''UPDATE OR IGNORE infractions
                       SET Username = '{new_name}'
@@ -87,16 +60,40 @@ class GuildManagement(commands.Cog):
         await member.edit(nick=f"{new_name}")
         await ctx.message.delete()
 
+    @commands.command(aliases=["rs"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy)
+    async def resign(self, ctx, member: discord.Member):
+        connect = sqlite3.connect(BotConf.path_database)
+        c = connect.cursor()
+        c.execute(f'''DELETE from infractions
+                      WHERE Username = '{member.display_name}'
+                   ''')
+        connect.commit()
+        c.execute(f'''DELETE from guild
+                      WHERE Username = '{member.display_name}'
+                   ''')
+        connect.commit()
+        connect.close()
+
+        guild = self.client.get_guild(BotConf.id_guild)
+        role_ex = guild.get_role(BotConf.dict_id_role_general["Ex"])
+        await member.add_roles(role_ex)
+        role_member = guild.get_role(BotConf.dict_id_role_general["Member"])
+        await member.remove_roles(role_member)
+        role_to_attend = guild.get_role(BotConf.dict_id_role_general["ToAttend"])
+        await member.remove_roles(role_to_attend)
+        await ctx.message.delete()
 
     @commands.command(aliases=["ci"])
     @commands.has_role(BotConf.name_role_to_attend)
     @BotConf.in_channel(BotConf.id_channel_attendance)
     async def checkin(self, ctx):
-        t = time.localtime()
-        connect = sqlite3.connect("modules/data/guild.db")
+        server_time = timezone("Asia/Jakarta")
+        t = datetime.datetime.now(server_time)
+        connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute(f'''UPDATE guild
-                      SET {time.strftime("%A", t)} = 1,
+                      SET {t.strftime("%A")} = 1,
                           Total = Total + 1
                       WHERE Username = '{ctx.author.display_name}'
                    ''')
@@ -117,7 +114,7 @@ class GuildManagement(commands.Cog):
     @commands.command(aliases=["grc"])
     @commands.has_role(BotConf.name_role_member)
     async def guildrecords(self, ctx):
-        connect = sqlite3.connect("modules/data/guild.db")
+        connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute(f'''SELECT Username FROM guild WHERE Total < {BotConf.num_attendances_required}
         ''')
@@ -139,7 +136,7 @@ class GuildManagement(commands.Cog):
     @commands.command(aliases=["mp"])
     @commands.has_role(BotConf.name_role_guildmaster)
     async def manualpenalty(self, ctx):
-        connection = sqlite3.connect("modules/data/guild.db")
+        connection = sqlite3.connect(BotConf.path_database)
         c = connection.cursor()
         c.execute('''INSERT OR IGNORE INTO infractions(Username) SELECT Username FROM guild
                                   ''')
@@ -212,7 +209,7 @@ class GuildManagement(commands.Cog):
         embed.set_author(name="Azure",
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
 
-        connection = sqlite3.connect("modules/data/guild.db")
+        connection = sqlite3.connect(BotConf.path_database)
         c = connection.cursor()
         c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
         list_entry = c.fetchall()
@@ -266,7 +263,7 @@ class GuildManagement(commands.Cog):
         embed.add_field(name="#whale-101",
                         value="Contains the links to the guides on how to spend your money wisely on this game",
                         inline=False)
-        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=True)
+        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=False)
         embed.add_field(name="#reminders",
                         value="You can get roles here so you can be notified if a certain event you want is starting.",
                         inline=False)
@@ -334,7 +331,7 @@ class GuildManagement(commands.Cog):
                         value="Contains the links to the guides on how to spend your money wisely on this game",
                         inline=False)
 
-        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=True)
+        embed.add_field(name="#build-sharing", value="Work-in-progress", inline=False)
 
         embed.add_field(name="#reminders",
                         value="You can get roles here so you can be notified if a certain event you want is starting.",
@@ -363,7 +360,7 @@ class GuildManagement(commands.Cog):
         guild = self.client.get_guild(BotConf.id_guild)
         leniency_role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
 
-        connection = sqlite3.connect("modules/data/guild.db")
+        connection = sqlite3.connect(BotConf.path_database)
         c = connection.cursor()
         c.execute(f'''UPDATE guild
                       SET Total = Total + {BotConf.num_attendances_required}
@@ -388,7 +385,7 @@ class GuildManagement(commands.Cog):
     async def update_infractions(self, ctx):
         channel_notice: discord.TextChannel = self.client.get_channel(BotConf.id_channel_notice)
 
-        connect = sqlite3.connect("modules/data/guild.db")
+        connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
         list_entry = c.fetchall()
@@ -412,6 +409,102 @@ class GuildManagement(commands.Cog):
         msg = await channel_notice.fetch_message(715520609890729995)
         await msg.edit(embed=embed)
         await ctx.message.delete()
+
+    @commands.command()
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def guidepve(self, ctx):
+        embed = discord.Embed(title="Xeno's Ultimate PVE Guide for Assassins", url="https://www.github.com/mrrazonj",
+                              description="Just as a preface to this guide, you should really be stacking MATK and MS "
+                                          "as high as you can. This means focusing on INT and DEX. You won't need "
+                                          "survivability much because in a working team, you should have a functional "
+                                          "tank. You also have two invulnerability skills, plus if you transition to "
+                                          "your dagger stance, you will become invisible and lose aggro.",
+                              color=0x953eff)
+        embed.set_author(
+            name="XenoXIII",
+            icon_url="https://i.pximg.net/img-master/img/2019/05/18/01/21/36/74775564_p0_master1200.jpg")
+        embed.set_thumbnail(url="https://i.imgur.com/lSZlEFE.png")
+        embed.add_field(name="Talents", value="-", inline=False)
+        embed.add_field(name="C - Heroic Sonata",
+                        value="Same with the PVP guide, this gives you the most benefits. The Variance "
+                              "talent gives you a damage boost only for your MS procs, but this talent provides "
+                              "a boost across the board.",
+                        inline=False)
+        embed.add_field(name="B - Dissonance",
+                        value="This talent is RNG-based. It can get pretty crazy like let you reset your Prelude "
+                              "Dawn AND Shadow Strike's cooldown 7 times in a row if you're lucky with the procs. "
+                              "It benefits your DPS both in Hunt and Dark mode.",
+                        inline=False)
+        embed.add_field(name="A - Echo of Soul",
+                        value="Ever wish you would proc more Multistrikes? Then take this talent with you! It gives "
+                              "you twice the base chance to proc an MS from your Dawn Prelude or Soul FIssure skills, "
+                              "both at a very low cooldown (5s~)",
+                        inline=False)
+        embed.add_field(name="S - Nibelungen Song",
+                        value="This talent synergizes with the other ones. It gives a nice boost to your DPS in Hunt "
+                              "Mode, and some much needed survivability in Dark Mode. Pray to RNGesus so you can proc "
+                              "those MSes all day long.",
+                        inline=False)
+        embed.add_field(name="Ex Skills", value="-", inline=False)
+        embed.add_field(name="Scorch",
+                        value="Most damage per second elemental EX skill. Prioritize casting this whenever it goes off "
+                              "CD",
+                        inline=False)
+        embed.add_field(name="Blackhole", value="Free DPS. Prioritize casting this whenever it goes off CD.",
+                        inline=False)
+        embed.add_field(name="Gameplay",
+                        value="**!!DO NOT USE AUTOBATTLE!!** - Now that we have that out of the way, assassin can be "
+                              "very mechanically intensive to play. My hands cramp up when playing the longer events, "
+                              "but it's totally worth it. Most of your DPS comes from Dark Mode. You will only use "
+                              "your Hunt Mode only if all your skills in Dark Mode are on cooldown (always wait for "
+                              "CDs that are ~2s)",
+                        inline=False)
+        embed.add_field(name="Hunt Mode",
+                        value="Use both of your EX skills for the opening. Follow up with Prelude Dawn, Dark Rhapsody, "
+                              "and Nocturne Luna. Pay attention to your Prelude Dawn if its CD has reset. Prioritize "
+                              "using it when it resets. When all skills are on cooldown, transition to Dark Mode.",
+                        inline=False)
+        embed.add_field(name="Dark Mode",
+                        value="Pay attention to your marks. Always use Shadow Strike whenever you mark the enemy. "
+                              "Prioritize using Soul Fissure because it has the least cooldown, and highest chance "
+                              "to proc MS. Always use Shadow Dart in point blank range so all three shurikens will "
+                              "hit, follow up this with Shadow Strike because it's a guaranteed mark. Be careful not "
+                              "to consume your mark using Obsidian Edge. Your normal attacks also reduce Shadow "
+                              "Dart's CD by 0.3s every time.You should only exit this form when every skill is on CD.",
+                        inline=False)
+        embed.set_image(url="https://i.imgur.com/CrFROvs.png")
+        embed.set_footer(text="That's all for now.")
+        await ctx.channel.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        connect = sqlite3.connect(BotConf.path_database)
+        c = connect.cursor()
+
+        c.execute('''CREATE TABLE IF NOT EXISTS guild
+                    (
+                     Username text primary key,
+                     Monday int,
+                     Tuesday int,
+                     Wednesday int,
+                     Thursday int,
+                     Friday int,
+                     Saturday int,
+                     Sunday int,
+                     Total int default 0)
+                   ''')
+
+        c.execute('''CREATE TABLE IF NOT EXISTS infractions
+                    (
+                     Username text primary key,
+                     Penalties int DEFAULT 0,
+                        FOREIGN KEY (Username)
+                            REFERENCES guild (USERNAME)
+                    )
+                   ''')
+
+        connect.close()
 
 
 def setup(client):
