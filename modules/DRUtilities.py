@@ -57,20 +57,29 @@ class DragonRajaUtilities(commands.Cog):
         timed_dungeon_pve = guild.get_role(BotConf.dict_id_role_events["TimedPVEDungeon"])
         role_wboss_borgman = guild.get_role(BotConf.dict_id_role_events["WBBorgman"])
         role_wboss_onimaru = guild.get_role(BotConf.dict_id_role_events["WBOnimaru"])
+        role_wboss_osho = guild.get_role(BotConf.dict_id_role_events["WBOsho"])
+        role_wboss_levi = guild.get_role(BotConf.dict_id_role_events["WBLevi"])
 
-        time_liberty_day = "11:00"
-        time_salon_brain = "12:00"
-        time_event_pve = "12:30"
-        list_time_limited_pve_dungeon = ["12:00",
-                                         "19:00"]
-        time_gossip = "20:00"
-        time_event_pvp = "21:00"
-        list_time_borgman_spawn = ["11:30",
-                                   "15:30",
-                                   "19:30",
-                                   "23:30"]
-        list_time_onimaru_spawn = ["14:40",
-                                   "22:40"]
+        time_liberty_day = "10:55"
+        time_salon_brain = "11:55"
+        time_event_pve = "12:25"
+        time_gossip = "19:55"
+        time_event_pvp = "20:55"
+        list_time_limited_pve_dungeon = ["11:55",
+                                         "18:55"]
+
+        list_time_borgman_leviathan_spawn = ["11:25",
+                                   "15:25",
+                                   "19:25",
+                                   "23:25"]
+
+        list_time_onimaru_spawn = ["14:35",
+                                   "22:35"]
+
+        list_time_osho_spawn = ["12:55",
+                                "15:55",
+                                "18:55",
+                                "22:55"]
 
         server_time = timezone("Asia/Jakarta")
         t = datetime.datetime.now(server_time)
@@ -78,44 +87,27 @@ class DragonRajaUtilities(commands.Cog):
 
         if current_time == time_liberty_day:
             await channel_reminder.send(role_liberty_day.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
         if current_time == time_salon_brain:
             await channel_reminder.send(role_salon_brain.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
         if current_time == time_event_pve:
             await channel_reminder.send(role_event_pve.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
         if current_time in list_time_limited_pve_dungeon:
             await channel_reminder.send(timed_dungeon_pve.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
         if current_time == time_gossip:
-            await channel_reminder.send(role_gossip.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
+            recruiter = guild.get_member(BotConf.id_member_recruiter)
+            await channel_reminder.send(content=f"{role_gossip.mention} - {recruiter.mention} post poster!")
         if current_time == time_event_pvp:
             await channel_reminder.send(role_event_pvp.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
-        if current_time in list_time_borgman_spawn:
-            await channel_reminder.send(role_wboss_borgman.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
+        if current_time in list_time_borgman_leviathan_spawn:
+            await channel_reminder.send(content=f"{role_wboss_borgman.mention} - {role_wboss_levi.mention}")
         if current_time in list_time_onimaru_spawn:
             await channel_reminder.send(role_wboss_onimaru.mention)
-            msg = await channel_reminder.fetch_message(channel_reminder.last_message_id)
-            await asyncio.sleep(5)
-            await msg.delete()
+        if current_time in list_time_osho_spawn:
+            await channel_reminder.send(role_wboss_osho.mention)
+        if current_time == "00:00":
+            async for msg in channel_reminder.history(limit=25):
+                if not msg.embeds and not msg.pinned:
+                    await msg.delete()
 
     @timed_event_ping.before_loop
     async def before_ping(self):

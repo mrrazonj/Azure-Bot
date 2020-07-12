@@ -6,6 +6,7 @@ import datetime
 from pytz import timezone
 
 import sqlite3
+import shelve
 
 import BotConf
 
@@ -14,6 +15,7 @@ class GuildSchedule(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.has_reset_daily = False
+
 
     @tasks.loop(seconds=20, reconnect=True)
     async def reset_daily(self):
@@ -73,24 +75,6 @@ class GuildSchedule(commands.Cog):
             if current_day == BotConf.reset_day:
                 connection = sqlite3.connect("modules/data/guild.db")
                 c = connection.cursor()
-                c.execute('''INSERT OR IGNORE INTO infractions(Username) SELECT Username FROM guild
-                          ''')
-                connection.commit()
-
-                c.execute(f'''SELECT Username FROM guild WHERE Total < {BotConf.num_attendances_required}
-                           ''')
-                members = c.fetchall()
-                list_member = []
-                for member in members:
-                    list_member.append(member[0])
-
-                for member in list_member:
-                    c.execute(f'''UPDATE infractions
-                                  SET Penalties = Penalties + 1
-                                  WHERE Username = '{member}'
-                               ''')
-                    connection.commit()
-
                 c.execute('''UPDATE guild
                              SET Monday = 0,
                                  Tuesday = 0,
@@ -102,39 +86,6 @@ class GuildSchedule(commands.Cog):
                                  Total = 0
                           ''')
                 connection.commit()
-
-                role_leniency: discord.Role = guild.get_role(BotConf.dict_id_role_general["Leniency"])
-                list_leniency = role_leniency.members
-                for member in list_leniency:
-                    member_lenient: discord.Member = member
-                    c.execute(f'''UPDATE guild
-                                  SET Total = 5
-                                  WHERE Username = '{member_lenient.display_name}'
-                               ''')
-                    connection.commit()
-
-                c.execute('''SELECT * FROM infractions WHERE Penalties > 0''')
-                list_entry = c.fetchall()
-                connection.close()
-
-                embed = discord.Embed(title="Azure Club", description="Member inactivity notice", color=0xff0000)
-                embed.set_author(name="Azure",
-                                 url="https://github.com/mrrazonj/Azure-Bot",
-                                 icon_url="https://i.imgur.com/alUOIgz.png")
-
-                list_entry_formatted = []
-                for entry in list_entry:
-                    list_entry_formatted.append(f"{entry[0]} - {entry[1]} infractions")
-
-                list_finalized = ("\n".join(str(i) for i in list_entry_formatted))
-                string_empty = "None"
-
-                embed.add_field(name=f"Members with infractions incurred:",
-                                value=f"{string_empty if not list_entry_formatted else list_finalized}")
-                embed.set_footer(text="This stub updates every Sunday at 23:10.")
-
-                embed_inactive_notice = await notice_channel.fetch_message(id_inactive_notice_embed)
-                await embed_inactive_notice.edit(embed=embed)
 
             await log_channel.send("Attendance module reset!")
             self.has_reset_daily = True

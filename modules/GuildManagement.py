@@ -3,6 +3,8 @@ from discord.ext import commands, tasks
 from discord.utils import get
 
 import sqlite3
+import shelve
+import random
 import datetime
 from pytz import timezone
 
@@ -12,6 +14,12 @@ class GuildManagement(commands.Cog):
 
     def __init__(self, client):
         self.client = client
+
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        if not bool(raffle_entries):
+            print("empty list created")
+            raffle_entries["entry"] = []
+        raffle_entries.close()
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
@@ -28,17 +36,38 @@ class GuildManagement(commands.Cog):
     async def verify(self, ctx, *, member: discord.Member):
         connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
-        c.execute(f'''INSERT INTO guild (Username, Total)
+        c.execute(f'''INSERT OR IGNORE INTO guild (Username, Total)
                       VALUES ('{member.display_name}', 7)
                    ''')
         connect.commit()
         connect.close()
+
         to_attend = get(ctx.guild.roles, name=BotConf.name_role_to_attend)
         for_approval = get(ctx.guild.roles, name=BotConf.name_role_for_approval)
         member_role = get(ctx.guild.roles, name=BotConf.name_role_member)
         await member.remove_roles(for_approval)
         await member.add_roles(member_role)
         await member.add_roles(to_attend)
+        await ctx.message.delete()
+
+    @commands.command(aliases=["rj"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
+    async def rejoin(self, ctx, *, member: discord.Member):
+        connect = sqlite3.connect(BotConf.path_database)
+        c = connect.cursor()
+        c.execute(f'''INSERT OR IGNORE INTO guild (Username, Total) 
+                      VALUES ('{member.display_name}', 7)
+                   ''')
+        connect.commit()
+        connect.close()
+
+        guild = self.client.get_guild(BotConf.id_guild)
+        to_attend = guild.get_role(BotConf.dict_id_role_general["ToAttend"])
+        await member.add_roles(to_attend)
+        role_member = guild.get_role(BotConf.dict_id_role_general["Member"])
+        await member.add_roles(role_member)
+        ex_member = guild.get_role(BotConf.dict_id_role_general["Ex"])
+        await member.remove_roles(ex_member)
         await ctx.message.delete()
 
     @commands.command(aliases=["rnm"])
@@ -90,6 +119,7 @@ class GuildManagement(commands.Cog):
     async def checkin(self, ctx):
         server_time = timezone("Asia/Jakarta")
         t = datetime.datetime.now(server_time)
+
         connect = sqlite3.connect(BotConf.path_database)
         c = connect.cursor()
         c.execute(f'''UPDATE guild
@@ -102,6 +132,11 @@ class GuildManagement(commands.Cog):
                    ''')
         total = c.fetchone()
         connect.close()
+
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        raffle_entries["entry"].append(f"{ctx.author.display_name}")
+        raffle_entries.close()
+
         to_attend = get(ctx.guild.roles, name=BotConf.name_role_to_attend)
         await ctx.author.remove_roles(to_attend)
         await ctx.message.delete()
@@ -110,6 +145,69 @@ class GuildManagement(commands.Cog):
         await ctx.author.dm_channel.send(f"Thank you for logging in today {ctx.author.display_name}, the guild "
                                          f"appreciates you for being active! You have currently logged in "
                                          f"{total[0]} time(s) this week.")
+
+    @commands.command(aliases=["mrfl"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def manualraffle(self, ctx, member: discord.Member, entries):
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        for i in range(int(entries)):
+            raffle_entries["entry"].append(f"{member.display_name}")
+        raffle_entries.close()
+
+        guild = self.client.get_guild(BotConf.id_guild)
+        role_attend = guild.get_role(BotConf.id_role_to_attend)
+        if role_attend in member.roles:
+            await member.remove_roles(role_attend)
+
+        await ctx.message.delete()
+
+    @commands.command(aliases=["chkrfl"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def checkraffle(self, ctx):
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        string_entries = ""
+        for entry in raffle_entries["entry"]:
+            string_entries += f"{entry}\n"
+        raffle_entries.close()
+
+        await ctx.message.delete()
+        await ctx.channel.send(f"**Raffle Entries for Deputy role:**"
+                               f"```\n"
+                               f"{string_entries}"
+                               f"```")
+
+    @commands.command(aliases=["drfl"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def drawraffle(self, ctx):
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        string_winner = random.choice(raffle_entries["entry"])
+        raffle_entries.close()
+        await ctx.channel.send(f"**Congratulations to {string_winner}!** You have won the deputy role for the week!")
+        await ctx.message.delete()
+
+    @commands.command(aliases=["rstrfl"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def resetraffle(self, ctx):
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        raffle_entries["entry"] = []
+        raffle_entries.close()
+
+    @commands.command(aliases=["cntrfl"])
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def countraffle(self, ctx):
+        raffle_entries = shelve.open(BotConf.path_raffle_database, writeback=True)
+        count_entries = {x: raffle_entries["entry"].count(x) for x in raffle_entries["entry"]}
+        raffle_entries.close()
+
+        string_entries = ""
+        for key, value in count_entries.items():
+            string_entries += f"{key} - {value}\n"
+
+        await ctx.channel.send(f"**Member - \# of Entries:**\n"
+                               f"```\n"
+                               f"{string_entries}"
+                               f"```")
+        await ctx.message.delete()
 
     @commands.command(aliases=["grc"])
     @commands.has_role(BotConf.name_role_member)
@@ -200,6 +298,38 @@ class GuildManagement(commands.Cog):
                          url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
         embed.set_footer(text="Attendance module resets at 23:10 Server Time.")
         await ctx.channel.send(embed=embed)
+        await ctx.message.delete()
+
+    @commands.command()
+    @commands.has_role(BotConf.name_role_guildmaster)
+    async def updateattendanceembed(self, ctx):
+        embed = discord.Embed(title="Azure Club", description=f"Please type {BotConf.bot_prefix}checkin or "
+                                                              f"{BotConf.bot_prefix}ci to record your attendance "
+                                                              f"for today. This will give you an entry to the deputy "
+                                                              f"raffle which will happen every Sunday "
+                                                              f"(after battle sim).",
+                              color=0x0096ff)
+        embed.set_author(name="Azure",
+                         url="https://github.com/mrrazonj/Azure-Bot", icon_url="https://i.imgur.com/alUOIgz.png")
+        embed.set_thumbnail(url="https://i.imgur.com/4AwatSh.png")
+
+        embed.add_field(name="Terms and Conditions:",
+                        value="Before/During raffle:\n"
+                              "1. By checking in, you agree to accept the deputy role if "
+                              "you ever win the raffle.\n"
+                              "2. You must not be inactive 2 days or above at the time of the raffle. If you win and "
+                              "are inactive, your win will be null and void and a re-roll for your spot will occur.\n\n"
+                              "As Deputy:\n"
+                              "1. You are not allowed to kick anyone or initiate any merge without my consent, or "
+                              "instructions.\n"
+                              "2. If ever I'm not online during Tuesday or Thursday night, you are urged to start the "
+                              "Star of Cassell and Feast events.\n"
+                              "3. I reserve the right to appoint another deputy if I deem you unfit for the role "
+                              "during the week. (inactivity without notice)")
+
+        embed.set_footer(text="Attendance module resets at 23:10 Server Time.")
+        msg: discord.Message= await ctx.channel.fetch_message(715463399907262534)
+        await msg.edit(embed=embed)
         await ctx.message.delete()
 
     @commands.command()
