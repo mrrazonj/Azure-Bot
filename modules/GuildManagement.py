@@ -22,9 +22,16 @@ class GuildManagement(commands.Cog):
         raffle_entries.close()
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         for_approval = get(member.guild.roles, name=BotConf.name_role_for_approval)
         await member.add_roles(for_approval)
+
+        guild = member.guild
+        log_channel: discord.TextChannel = guild.get_channel(BotConf.dict_id_channels["Log"])
+        guildmaster = guild.get_role(BotConf.dict_id_role_general["GuildMaster"])
+        deputy = guild.get_role(BotConf.dict_id_role_general["Deputy"])
+
+        await log_channel.send(content=f"{guildmaster.mention}, {deputy.mention}, new member joined!")
 
         if member.dm_channel is None:
             await member.create_dm()
@@ -48,6 +55,17 @@ class GuildManagement(commands.Cog):
         await member.remove_roles(for_approval)
         await member.add_roles(member_role)
         await member.add_roles(to_attend)
+        await ctx.message.delete()
+
+    @commands.command(aliases=["vg"])
+    @commands.has_any_role(BotConf.name_role_guildmaster, BotConf.name_role_deputy, BotConf.name_role_recruiter)
+    async def verifyguest(self, ctx, *, member: discord.Member):
+        guild = ctx.guild
+        guest = guild.get_role(BotConf.dict_id_role_general["Guest"])
+        for_approval = guild.get_role(BotConf.dict_id_role_general["ForApproval"])
+
+        await member.remove_roles(for_approval)
+        await member.add_roles(guest)
         await ctx.message.delete()
 
     @commands.command(aliases=["rj"])
